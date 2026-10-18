@@ -5,6 +5,8 @@
   --accent: #1f5fa8;
   --test: #d9822b;
   --recette: #6b4fa8;
+  --alerte: #c0392b;
+  --ligne: #e3e6ec;
   color-scheme: light dark;
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 }
@@ -15,6 +17,8 @@
     --texte: #e8ecf3;
     --discret: #9aa4b4;
     --accent: #7fb0ea;
+    --alerte: #e0604f;
+    --ligne: #2a313d;
   }
 }
 
@@ -54,9 +58,36 @@ body {
   background: var(--discret);
 }
 
+/* Une colonne étroite, centrée : la même page sur téléphone, tablette et PC. */
 main {
   flex: 1;
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
   padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+h1 {
+  margin: 0;
+  font-size: 22px;
+}
+
+h2 {
+  margin: 0 0 8px;
+  font-size: 16px;
+  color: var(--discret);
+}
+
+.valeur {
+  margin: 0;
+  text-align: center;
+  font-size: 96px;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
 }
 
 button {
@@ -67,9 +98,84 @@ button {
   background: var(--accent);
   color: var(--fond);
   cursor: pointer;
+  touch-action: manipulation;
+}
+
+button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* Gros boutons, faciles à atteindre d'une main. */
+.commandes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.pas {
+  min-height: 72px;
+  font-size: 40px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.remise {
+  background: transparent;
+  color: var(--accent);
+}
+
+.remise.a-confirmer {
+  background: var(--alerte);
+  border-color: var(--alerte);
+  color: #fff;
+  font-weight: 600;
+}
+
+.historique ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.historique li {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    'operation date'
+    'valeur date';
+  column-gap: 12px;
+  padding: 8px 0;
+  border-top: 1px solid var(--ligne);
+}
+
+.historique .operation {
+  grid-area: operation;
+  font-weight: 600;
+}
+
+.historique .nouvelle-valeur {
+  grid-area: valeur;
+  color: var(--discret);
+}
+
+.historique time {
+  grid-area: date;
+  align-self: center;
+  font-size: 13px;
+  color: var(--discret);
+  font-variant-numeric: tabular-nums;
+}
+
+.historique .vide {
+  margin: 0;
+  color: var(--discret);
 }
 
 footer {
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
   padding: 12px 16px;
   font-size: 12px;
   color: var(--discret);
