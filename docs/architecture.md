@@ -9,6 +9,7 @@ Application web statique, sans serveur, en TypeScript et React, construite avec 
 ## Organisation du code
 
 - `src/core` : logique métier, sans dépendance au navigateur ni à React, couverte par les tests de `tests/`.
+  - `src/core/compteur.ts` : état du compteur (valeur et historique des 10 derniers changements) et ses opérations, sous forme de fonctions pures qui rendent un nouvel état. La date de chaque changement est fournie par l'appelant, ce qui rend les tests déterministes.
 - `src/ui` : interface React.
 - `src/env.ts` : canal (production, recette, version de test, développement), version et chemin de publication, fixés à la construction.
 - `src/stockage-navigateur.ts` et `src/core/stockage.ts` : stockage local cloisonné par chemin de publication.
@@ -25,4 +26,6 @@ Application web statique, sans serveur, en TypeScript et React, construite avec 
 
 | Date | Décision | Raison |
 | --- | --- | --- |
+| 2026-10-18 | État du compteur mémorisé sous la clé `etat-compteur`, l'ancienne clé `compteur` (simple nombre) étant reprise à la première lecture | Conserver la valeur des utilisateurs de la version 0.1.0 |
+| 2026-10-18 | Historique limité aux 10 derniers changements, tronqué à l'écriture | Stockage borné, page simple ; un historique complet viendra avec l'export (issue #3) si besoin |
 | 2026 | Projet démarré à partir du cadre Webapp Pages | Méthode et socle technique communs aux projets construits avec ce cadre |
