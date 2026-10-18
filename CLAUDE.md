@@ -1,0 +1,32 @@
+# Consignes pour Claude
+
+- Langue : français pour le code commenté, les messages de commit, les demandes de fusion, l'interface et la documentation.
+- Documentation de référence : `docs/specifications.md` et `docs/architecture.md` font foi. Toute modification du périmètre, du comportement ou de l'architecture les met à jour dans la même demande de fusion, registre des décisions compris.
+- Backlog : les évolutions sont des issues GitHub. Une issue démarre par un entretien de spécification avec le développeur, sous forme de questions à choix ; les sujets écartés deviennent de nouvelles issues.
+- Cycle : une branche et une demande de fusion par évolution, jamais de poussée directe sur `main`. Le développeur relit et fusionne ; la fusion publie en recette.
+- Demande de fusion : l'ouvrir en brouillon, la mise à jour de `docs/` en premier commit. Sa description commence par `Closes #N` : GitHub ne reconnaît que les mots-clés anglais (`Closes`, `Fixes`, `Resolves`). Une demande qui ne touche pas l'application (documentation, consignes, CI) s'ouvre directement prête.
+- Trois étages de publication, sur `https://jppouzol.github.io/test-cadre-webapp-pages/` :
+  - version de test : chaque demande de fusion, sur `pr-preview/pr-<N>/`, lien posté par la CI. Le développeur y essaie la fonctionnalité seule ; Claude passe la demande prête à relire quand le développeur a validé (ou il la passe lui-même) ;
+  - recette : chaque fusion dans `main`, sur `recette/`. Elle cumule les évolutions fusionnées depuis la dernière release ;
+  - production : chaque release publiée, à la racine.
+- Release : seulement à la demande du développeur. Claude propose un numéro (`vX.Y.Z` : Z pour des corrections, Y pour des fonctionnalités, X pour une rupture) et des notes qui listent les demandes de fusion depuis la release précédente, puis crée la release depuis `main` une fois que le développeur a validé.
+- Correctif urgent, quand `main` contient des évolutions qui ne doivent pas partir en production : corriger d'abord dans `main` par le cycle normal, puis créer une branche `correctif/vX.Y.Z` depuis l'étiquette de la dernière release, y reporter le seul commit du correctif (`git cherry-pick`), le faire vérifier par le développeur sur la version de test d'une demande de fusion vers cette branche, puis créer la release sur cette branche (`target_commitish=correctif/vX.Y.Z`).
+- Fin d'une évolution : vérifier que la demande de fusion est bien fusionnée, puis proposer un nom de conversation au format « Issue #N / PR #M — objet de l'issue ».
+- Architecture : la logique métier vit dans `src/core`, sans dépendance au navigateur ni à React, et elle est testée ; `src/ui` l'utilise. Pas de syntaxe TypeScript non effaçable (enums, propriétés de paramètres de constructeur) : les tests tournent avec la suppression de types de Node.js.
+- Cloisonnement : production, recette et versions de test partagent la même origine. Tout stockage local passe par `src/stockage-navigateur.ts`, préfixé par le chemin de publication. Le service worker s'enregistre en production et en recette ; celui de la production ignore `recette/` et `pr-preview/`. S'il change, incrémenter `VERSION_CACHE` dans `public/sw.js`.
+- Hors ligne : aucune ressource externe (CDN, polices ou images en ligne) ; tout est embarqué dans le dépôt.
+- Avant de proposer une demande de fusion : `npm test` et `npm run typecheck` passent, et tout comportement nouveau de `src/core` est couvert par un test.
+
+## Environnement de développement de Claude (claude.ai)
+
+Consignes pour les sessions lancées depuis claude.ai, dont l'environnement distant a un accès réseau restreint.
+
+- Dépôt : le rattacher avec un accès en écriture (`push`), sinon `gh api` ne voit ni les issues ni les demandes de fusion. GraphQL n'est pas disponible : `gh issue view` et `gh pr view` échouent, passer par l'API REST (`gh api repos/jppouzol/test-cadre-webapp-pages/...`).
+- Clone superficiel : juste après le clone, lancer `git config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*'`, pour que `git push -u` établisse le suivi des branches.
+- Registre npm : `registry.npmjs.org` est autorisé dans les capacités du compte, mais n'est joignable qu'à travers le proxy de la session, dont la configuration par défaut l'exclut. Dans chaque commande npm, vider d'abord cette exclusion : `export NO_PROXY= no_proxy= npm_config_noproxy=`, puis `npm install --no-audit --no-fund`. Le vérifier une fois avec `npm view react version`.
+- Avec les dépendances : `npm test`, `npm run typecheck`, puis `npm run build` (variables `BASE_PATH` et `VITE_CANAL` comme dans les workflows ; sans elles, construction locale à la racine). Générer les icônes avant de construire : Vite ne réécrit le lien vers `icon-192.png` que si le fichier existe.
+- Essai dans un navigateur : Playwright pour Python et le Chromium de `/opt/pw-browsers/chromium-*/chrome-linux/chrome`, aux formats des supports visés (téléphone, tablette et PC : téléphone à 390 px de large, tablette à 820 px, PC à 1280 px), sur l'application construite, pas sur une maquette. Servir `dist/` en local (`python3 -m http.server`) sous le chemin choisi par `BASE_PATH` : le service worker ne fonctionne qu'en HTTP.
+- Si le registre redevient inaccessible : ne pas insister ni contourner. `npm test` fonctionne sans dépendances, et esbuild et React sont installés dans `/opt/npm-tools/node_modules` pour une construction approchée : `NODE_PATH=/opt/npm-tools/node_modules /opt/npm-tools/node_modules/.bin/esbuild src/main.tsx --bundle --minify --format=iife --jsx=automatic --define:process.env.NODE_ENV='"production"' --define:import.meta.env='{"BASE_URL":"/"}' --outfile=<dossier>/app.js`, plus `public/` et un `index.html` qui charge `app.css` et `app.js`. La vérification des types reste alors à la CI.
+- Demande de fusion en brouillon : l'ouvrir avec `-F draft=true`. L'API REST ne permet pas de la passer prête, mais le proxy de la session offre une route : `gh api -X POST repos/jppouzol/test-cadre-webapp-pages/pulls/<numéro>/ccr/ready_for_review`.
+- Version de test : après chaque poussée, attendre la fin du workflow « Prévisualisation », vérifier que la version de test répond, puis donner le lien au développeur.
+- Release : `gh api -X POST repos/jppouzol/test-cadre-webapp-pages/releases -f tag_name=vX.Y.Z -f target_commitish=main -f name=vX.Y.Z -f body='<notes>'`, puis attendre le workflow « Mise en production » et vérifier la version affichée en production.

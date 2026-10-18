@@ -1,0 +1,41 @@
+# Version de test de chaque demande de fusion, publiée sur
+# https://<compte>.github.io/<dépôt>/pr-preview/pr-<N>/ et retirée à sa fermeture.
+# Le lien est posté en commentaire de la demande de fusion.
+name: Prévisualisation
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, closed]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: preview-${{ github.event.number }}
+  cancel-in-progress: false
+
+jobs:
+  previsualiser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        if: github.event.action != 'closed'
+        with:
+          node-version: 22
+      - name: Installer les dépendances
+        if: github.event.action != 'closed'
+        run: npm install --no-audit --no-fund
+      - name: Construction
+        if: github.event.action != 'closed'
+        run: npm run build
+        env:
+          BASE_PATH: /${{ github.event.repository.name }}/pr-preview/pr-${{ github.event.number }}/
+          VITE_CANAL: preview
+          VITE_PR: ${{ github.event.number }}
+          VITE_VERSION: ${{ github.event.pull_request.head.sha }}
+      - name: Publier ou retirer la version de test
+        uses: rossjrw/pr-preview-action@v1
+        with:
+          source-dir: dist

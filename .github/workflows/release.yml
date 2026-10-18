@@ -1,0 +1,42 @@
+# Mise en production : à chaque release publiée sur GitHub (étiquette vX.Y.Z créée depuis main).
+name: Mise en production
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: production
+  cancel-in-progress: false
+
+jobs:
+  publier:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Installer les dépendances
+        run: npm install --no-audit --no-fund
+      - name: Tests
+        run: npm test
+      - name: Construction
+        run: npm run build
+        env:
+          BASE_PATH: /${{ github.event.repository.name }}/
+          VITE_CANAL: prod
+          VITE_VERSION: ${{ github.event.release.tag_name }}
+      # Écrit la racine de la branche gh-pages en préservant la recette et les versions de test.
+      - name: Publier en production
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: dist
+          branch: gh-pages
+          clean-exclude: |
+            pr-preview/
+            recette/
+          force: false

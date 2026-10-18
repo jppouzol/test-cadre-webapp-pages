@@ -1,0 +1,65 @@
+# Vérifications sur chaque demande de fusion ; publication en recette à chaque fusion dans main.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Sur une demande de fusion, un nouveau commit annule les vérifications en cours.
+# Sur main, une publication commencée n'est jamais interrompue.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  verifier:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Installer les dépendances
+        run: npm install --no-audit --no-fund
+      - name: Tests
+        run: npm test
+      - name: Vérification des types
+        run: npm run typecheck
+      - name: Construction
+        run: npm run build
+        env:
+          BASE_PATH: /${{ github.event.repository.name }}/recette/
+          VITE_CANAL: recette
+          VITE_VERSION: ${{ github.sha }}
+      - name: Conserver la construction
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: recette
+          path: dist
+
+  publier:
+    if: github.event_name != 'pull_request'
+    needs: verifier
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: recette
+          path: dist
+      # Remplace le dossier recette/ de la branche gh-pages, sans toucher au reste.
+      - name: Publier en recette
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: dist
+          branch: gh-pages
+          target-folder: recette
+          force: false
