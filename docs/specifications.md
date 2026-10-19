@@ -20,6 +20,7 @@ téléphone, tablette et PC. La mise en page et les essais sont conçus pour ces
 
 ## Fonctionnalités
 
+- Message de bienvenue, dans un encadré en haut de page, au-dessus du compteur, affiché à chaque ouverture, sans bouton pour le fermer : « Bienvenue ! Comptez avec + et −, vos 10 derniers changements s'affichent dessous. Tout reste sur cet appareil, même sans réseau. »
 - Compteur affiché en grand, à 0 au premier lancement.
 - Bouton « + » : ajoute 1.
 - Bouton « − » : retire 1. Le compteur ne descend pas sous 0 : le bouton est désactivé à 0.

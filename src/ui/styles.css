@@ -7,6 +7,7 @@
   --recette: #6b4fa8;
   --alerte: #c0392b;
   --ligne: #e3e6ec;
+  --encadre: #eef3fa;
   color-scheme: light dark;
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 }
@@ -19,6 +20,7 @@
     --accent: #7fb0ea;
     --alerte: #e0604f;
     --ligne: #2a313d;
+    --encadre: #1c2430;
   }
 }
 
@@ -79,6 +81,15 @@ h2 {
   margin: 0 0 8px;
   font-size: 16px;
   color: var(--discret);
+}
+
+.bienvenue {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 8px;
+  border-left: 4px solid var(--accent);
+  background: var(--encadre);
+  line-height: 1.45;
 }
 
 .valeur {

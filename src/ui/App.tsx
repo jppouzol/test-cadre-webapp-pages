@@ -64,6 +64,11 @@ export function App() {
       <main>
         <h1>{TITRE}</h1>
 
+        <p className="bienvenue">
+          <strong>Bienvenue !</strong> Comptez avec + et −, vos 10 derniers changements s'affichent dessous. Tout
+          reste sur cet appareil, même sans réseau.
+        </p>
+
         <p className="valeur" aria-live="polite" aria-label={`Compteur : ${etat.valeur}`}>
           {etat.valeur}
         </p>
